@@ -1,5 +1,7 @@
 *.class
 *.log
+*.jar
+*.iml
 
 # sbt specific
 dist/*
