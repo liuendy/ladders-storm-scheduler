@@ -15,11 +15,21 @@ class ExecutorManager(cluster: Cluster) extends Interleaver {
   private def groupExecutorsPerSlot(topology: TopologyDetails): List[List[ExecutorDetails]] = {
     val executors = getExecutorsByWorkerByComponent(topology)
     logger.debug("executor groups: " + executors.map(_.size).mkString(","))
-    val interleavedExecutors = interleave(executors).map(_.flatten)
+
+    val componentsWithExecutorsForOnlyOneWorker = executors.filter(_.size == 1).map(_.head)
+    logger.debug("componentsWithExecutorsForOnlyOneWorker: " + componentsWithExecutorsForOnlyOneWorker.map(_.size).mkString(","))
+    val componentsWithExecutorsForMoreThanOneWorker = executors.filter(_.size > 1)
+    logger.debug("componentsWithExecutorsForMoreThanOneWorker groups: " + componentsWithExecutorsForMoreThanOneWorker.map(_.size).mkString(","))
+
+    val interleavedExecutors = interleave(componentsWithExecutorsForMoreThanOneWorker).map(_.flatten)
     logger.debug("interleaved executor groups: " + interleavedExecutors.map(_.size).mkString(","))
     logger.debug("interleaved executor groups: \r\n\t" + interleavedExecutors.map(_.toString).mkString("\r\n\t"))
 
-    interleavedExecutors
+    val results = interleavedExecutors
+      .zip(componentsWithExecutorsForOnlyOneWorker)
+      .map(t => {t._1 ++ t._2})
+
+    results
   }
 
 
